@@ -1,5 +1,5 @@
 ---
-- name: Create the next available VLAN
+- name: Create EVPN configuration
   hosts: leaf
   gather_facts: false
   remote_user: "{{remote_user}}"
@@ -114,7 +114,7 @@
 
                   - name: Enable IP forward on SVI
                     nxos_interface:
-                      interface: "{{ 'vlan'  free_vlan.meta.vlan_free|string }}" 
+                      interface: "{{ 'vlan'+ free_vlan.meta.vlan_free|string }}" 
                       ip_forward: enable    
 
                 rescue:
