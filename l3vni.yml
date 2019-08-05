@@ -1,0 +1,28 @@
+---
+- name: Get the next available L3VNI
+  hosts: leaf
+  gather_facts: false
+  remote_user: "{{remote_user}}"
+  connection: local
+
+  tasks:
+              - name: Get VNI list
+                nxos_command:
+                  commands: "show nve vni | json"
+                register: result
+
+              - name: Save output
+                set_fact:
+                  vni: "{{ result.stdout[0].TABLE_nve_vni.ROW_nve_vni }}"
+
+              - name: Get next free L2VNI
+                search_next_l3vni:
+                  list: "{{ vni }}"
+                register: free
+
+              - debug:
+                  msg: "{{ free.meta.l3vni_free }}"
+
+
+
+    

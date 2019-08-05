@@ -1,0 +1,127 @@
+---
+- name: Create the next available VLAN
+  hosts: leaf
+  gather_facts: false
+  remote_user: "{{remote_user}}"
+  connection: local
+
+  tasks:
+
+              - name: Create checkpoint
+                nxos_rollback:
+                  checkpoint_file: backup.cfg
+
+              - name: EVPN L3 config
+                block:
+                  - name: Get VRF list
+                    nxos_command:
+                      commands: "show vrf | json"
+                    register: result_vrf
+
+                  - name: Save output
+                    set_fact:
+                      vrf: "{{ result_vrf.stdout[0].TABLE_vrf.ROW_vrf }}"
+
+                  - name: Check if vrf exists
+                    check_vrf:
+                      vrf_list: "{{ vrf }}"
+                      vrf_name: "{{ vrf_name }}"
+                    register: vrf
+
+                  - debug:
+                      msg: "{{ vrf }}"
+
+                  - name: Check if vrf exists
+                    assert:
+                      that: vrf.meta.vrf is match("notexist")
+                      fail_msg: "VRF name already exist"
+                      success_msg: "VRF name not taken"
+
+                  - name: Take the VLAN list
+                    nxos_command:
+                      commands: "show vlan brief | json"
+                    register: result_vlan
+
+                  - name: Save output
+                    set_fact:
+                      vlan: "{{ result_vlan.stdout[0].TABLE_vlanbriefxbrief.ROW_vlanbriefxbrief }}"
+
+                  - name: Get next free VLAN
+                    search_vlan:
+                      list: "{{ vlan }}"
+                    register: free_vlan
+
+                  - debug:
+                      msg: "{{ free_vlan.meta.vlan_free }}"
+
+                  - name: Get VNI list
+                    nxos_command:
+                      commands: "show nve vni | json"
+                    register: result_vni
+
+                  - name: Save output
+                    set_fact:
+                      vni: "{{ result_vni.stdout[0].TABLE_nve_vni.ROW_nve_vni }}"
+
+                  - name: Get next free L3VNI
+                    search_next_l3vni:
+                      list: "{{ vni }}"
+                    register: free_l3vni
+
+                  - debug:
+                      msg: "{{ free_l3vni.meta.l3vni_free }}"
+
+
+                  - name: Create VLAN and associate to L3VNI
+                    nxos_vlan:
+                      vlan_id: "{{ free_vlan.meta.vlan_free }}"
+                      mapped_vni: "{{ free_l3vni.meta.l3vni_free }}"
+
+                  - name: Add L3VNI to VTEP
+                    nxos_vxlan_vtep_vni:
+                      interface: nve1
+                      vni: "{{ free_l3vni.meta.l3vni_free }}"
+                      assoc_vrf: "true"
+
+                  - name: Create SVI
+                    nxos_interface:
+                      interface: "{{ 'vlan'+  free_vlan.meta.vlan_free|string }}"                        
+
+                  - name: Create VRF
+                    nxos_vrf:
+                      vrf: "{{ vrf_name }}"
+                      vni: "{{ free_l3vni.meta.l3vni_free }}"
+                      rd: auto
+
+                  - name: Create VRF and providing mapping to VXLAN 
+                    nxos_vrf_af:
+                      vrf: "{{ vrf_name }}"
+                      afi: ipv4
+                      route_target_both_auto_evpn: true
+
+                  - name: Asign SVI to VRF
+                    nxos_vrf_interface:
+                      vrf: "{{ vrf_name }}"
+                      interface: "{{ 'vlan'+  free_vlan.meta.vlan_free|string }}"                                
+
+                  - name: BASE AF CONFIG
+                    nxos_bgp_af:
+                        asn: "65535"
+                        vrf: "{{ vrf_name }}"
+                        afi: "ipv4"
+                        safi: "unicast"
+                        advertise_l2vpn_evpn: "true"
+
+                  - name: Enable IP forward on SVI
+                    nxos_interface:
+                      interface: "{{ 'vlan'  free_vlan.meta.vlan_free|string }}" 
+                      ip_forward: enable    
+
+                rescue:
+                  - debug: msg='Error on one of the tasks, rolling back to previous checkpoint'
+                  - name: Rollback to checkpoint
+                    nxos_rollback:
+                      rollback_to: backup.cfg
+                      timeout: 60 
+
+

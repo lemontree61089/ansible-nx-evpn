@@ -1,0 +1,23 @@
+---
+- name: Create the next available VLAN
+  hosts: leaf
+  gather_facts: false
+  remote_user: "{{remote_user}}"
+  connection: local
+
+  tasks:
+              - name: Get VNI list
+                nxos_command:
+                  commands: "show nve vni | json"
+                register: result
+
+              - name: Save output
+                set_fact:
+                  vlan: "{{ result.stdout[0].TABLE_nve_vni.ROW_nve_vni }}"
+
+              - debug:
+                  msg: "{{ vlan }}"
+
+      
+
+

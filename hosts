@@ -1,0 +1,13 @@
+[ios]
+192.168.76.136
+
+[nexus]
+192.168.32.137
+
+[leaf]
+10.220.60.82
+
+[cisco:children]
+ios
+nexus
+leaf
