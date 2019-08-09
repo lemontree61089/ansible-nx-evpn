@@ -1,0 +1,22 @@
+---
+- hosts: leaf
+  gather_facts: false
+  remote_user: "{{remote_user}}"
+  connection: local
+  tasks:
+
+    - name: Create checkpoint
+      nxos_rollback:
+        checkpoint_file: backup.cfg
+
+    - name: Full EVPN config
+      block:
+        - include_role:
+            name: "check_vni_L2"
+        - include_role:
+            name: "check_vlan_L2"
+        - include_role:
+            name: "L2VNI_only" 
+      rescue:
+        - include_role:
+            name: "rollback"

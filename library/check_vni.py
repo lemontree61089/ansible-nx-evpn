@@ -6,11 +6,11 @@ from ansible.module_utils.basic import *
 def main():
 
 	fields = {
-      "vrf_list": {
+      "vni_list": {
         "required": True,
         "type": "list",
 	   },
-	   "vrf_name":{
+	  "vni_id":{
 	    "required": True,
 	    "type": "str"
 	   }
@@ -18,23 +18,23 @@ def main():
 
 	module = AnsibleModule(argument_spec=fields)
 
-	vrf_list = module.params["vrf_list"]
-	vrf_name = module.params["vrf_name"]
+	vni_list = module.params["vni_list"]
+	vni_id = module.params["vni_id"]
 
-	list_size = len(vrf_list)
+	list_size = len(vni_list)
 	exist = False
 	l = 0
 
 	while l < list_size and not exist:
-	  if vrf_name.lower() == vrf_list[l]["vrf_name"].lower():
+	  if vni_id == vni_list[l]["vni"]:
 	  	exist = "True"
 	  l = l +1
 
 	if exist:
-		response = {vrf_name: "Exist"}
-		module.fail_json(changed=False, meta=response, msg="VRF already exist")
+		response = {vni_id: "Exist"}
+		module.fail_json(changed=False, meta=response, msg="VNI already exist")
 	else:
-		response = {vrf_name: "Does not exist"}
+		response = {vni_id: "Does not exist"}
 		module.exit_json(changed=False, meta=response)
 
 

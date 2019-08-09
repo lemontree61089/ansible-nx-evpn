@@ -1,0 +1,54 @@
+---
+- name: Create VLAN and associate to L3VNI
+  nxos_vlan:
+    vlan_id: "{{ item.vlan }}"
+    mapped_vni: "{{ item.vni}}"
+    name: "{{ item.vlan_name}}"
+  with_items: "{{ L3VNI }}"
+
+- name: Add L3VNI to VTEP
+  nxos_vxlan_vtep_vni:
+    interface: nve1
+    vni: "{{ item.vni }}"
+    assoc_vrf: "true"
+  with_items: "{{ L3VNI }}"
+
+- name: Create VRF
+  nxos_vrf:
+    vrf: "{{ item.vrf }}"
+    vni: "{{ item.vni }}"
+    rd: auto
+  with_items: "{{ L3VNI }}"
+
+- name: Create VRF and providing mapping to VXLAN 
+  nxos_vrf_af:
+    vrf: "{{ item.vrf }}"
+    afi: ipv4
+    route_target_both_auto_evpn: true
+  with_items: "{{ L3VNI }}"
+
+- name: Create SVI (L3VNI)
+  nxos_interface:
+    interface: "{{ 'vlan'+  item.vlan|string }}"  
+  with_items: "{{ L3VNI }}" 
+
+- name: Asign SVI to VRF (L3VNI)
+  nxos_vrf_interface:
+    vrf: "{{ item.vrf }}"
+    interface: "{{ 'vlan'+  item.vlan|string }}"
+  with_items: "{{ L3VNI }}"
+
+- name: Enable IP forward on SVI
+  nxos_interface:
+    interface: "{{ 'vlan'+ item.vlan|string }}" 
+    ip_forward: enable  
+  with_items: "{{ L3VNI }}"
+
+- name: BGP 
+  nxos_bgp_af:
+    asn: "65535"
+    vrf: "{{ item.vrf }}"
+    afi: "ipv4"
+    safi: "unicast"
+    advertise_l2vpn_evpn: "true"
+  with_items: "{{ L3VNI }}"

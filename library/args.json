@@ -1,33 +1,52 @@
 { "ANSIBLE_MODULE_ARGS": {
-	"list":
+    "vlan_list_config": "101",
+    "vlan_list_running":
     [
         {
-            "if-name": "nve1", 
-            "vni": "5000", 
-            "mcast": "UnicastBGP", 
-            "vni-state": "Up", 
-            "mode": "CP", 
-            "type": "L2 [1000]", 
-            "flags": "SA"
-        }, 
-        {
-            "if-name": "nve1", 
-            "vni": "5001", 
-            "mcast": "UnicastBGP", 
-            "vni-state": "Up", 
-            "mode": "CP", 
-            "type": "L2 [1001]", 
-            "flags": "SA"
-        }, 
-        {
-            "if-name": "nve1", 
-            "vni": "900001", 
-            "mcast": "n/a", 
-            "vni-state": "Up", 
-            "mode": "CP", 
-            "type": "L3 [Tenant-1]", 
-            "flags": null
-        }
+                "vlanshowbr-vlanid": "1", 
+                "vlanshowbr-vlanid-utf": "1", 
+                "vlanshowbr-vlanname": "default", 
+                "vlanshowbr-vlanstate": "active", 
+                "vlanshowbr-shutstate": "noshutdown", 
+                "vlanshowplist-ifidx": "Ethernet1/3"
+            }, 
+            {
+                "vlanshowbr-vlanid": "101", 
+                "vlanshowbr-vlanid-utf": "101", 
+                "vlanshowbr-vlanname": "VLAN0101", 
+                "vlanshowbr-vlanstate": "active", 
+                "vlanshowbr-shutstate": "noshutdown"
+            }, 
+            {
+                "vlanshowbr-vlanid": "1000", 
+                "vlanshowbr-vlanid-utf": "1000", 
+                "vlanshowbr-vlanname": "VLAN1000", 
+                "vlanshowbr-vlanstate": "active", 
+                "vlanshowbr-shutstate": "noshutdown", 
+                "vlanshowplist-ifidx": "Ethernet1/2"
+            }, 
+            {
+                "vlanshowbr-vlanid": "1001", 
+                "vlanshowbr-vlanid-utf": "1001", 
+                "vlanshowbr-vlanname": "VLAN1001", 
+                "vlanshowbr-vlanstate": "active", 
+                "vlanshowbr-shutstate": "noshutdown"
+            }, 
+            {
+                "vlanshowbr-vlanid": "1002", 
+                "vlanshowbr-vlanid-utf": "1002", 
+                "vlanshowbr-vlanname": "VLAN1002", 
+                "vlanshowbr-vlanstate": "active", 
+                "vlanshowbr-shutstate": "noshutdown"
+            }, 
+            {
+                "vlanshowbr-vlanid": "1003", 
+                "vlanshowbr-vlanid-utf": "1003", 
+                "vlanshowbr-vlanname": "VLAN1003", 
+                "vlanshowbr-vlanstate": "active", 
+                "vlanshowbr-shutstate": "noshutdown", 
+                "vlanshowplist-ifidx": "Ethernet1/9"
+            }
     ]
   }
 }

@@ -1,0 +1,7 @@
+---
+- hosts: leaf
+  gather_facts: false
+  remote_user: "{{remote_user}}"
+  connection: local
+  roles:
+  	- check_vni

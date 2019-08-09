@@ -1,0 +1,60 @@
+---
+- name: Create VLAN and associate to L2VNI
+  nxos_vlan:
+    vlan_id: "{{ item.vlan }}"
+    mapped_vni: "{{ item.vni}}"
+    name: "{{ item.vlan_name}}"
+  with_items: "{{ L2VNI }}"
+
+- name: Configure Port as layer2
+  nxos_interface:
+    interface: "{{ item.interface }}"
+    mode: layer2
+    admin_state: up
+  with_items: "{{ L2VNI }}"
+
+- name: Assign the VLAN to port
+  nxos_switchport:
+    interface: "{{ item.interface }}"
+    mode: access
+    access_vlan: "{{ item.vlan }}"
+  with_items: "{{ L2VNI }}"
+
+- name: Create SVI (L2VNI)
+  nxos_interface:
+    interface: "{{ 'vlan'+  item.vlan|string }}"
+  with_items: "{{ L2VNI }}"
+
+- name: Asign SVI to VRF (L2VNI)
+  nxos_vrf_interface:
+    vrf: "{{ item.vrf }}"
+    interface: "{{ 'vlan'+  item.vlan|string }}" 
+  with_items: "{{ L2VNI }}"
+
+- name: Configure IP settings to SVI
+  nxos_ip_interface:
+    interface: "{{ 'vlan'+  item.vlan|string }}"
+    addr: "{{ item.addr }}"
+    mask: "{{ item.mask }}"
+  with_items: "{{ L2VNI }}"
+
+- name: Enable anycast gw on SVI
+  nxos_interface:
+    interface: "{{ 'vlan'+  item.vlan|string }}"
+    fabric_forwarding_anycast_gateway: true
+  with_items: "{{ L2VNI }}"
+
+- name: Add L2VNI to VTEP
+  nxos_vxlan_vtep_vni:
+    interface: nve1
+    vni: "{{ item.vni}}"
+    ingress_replication: bgp
+    suppress_arp: true
+  with_items: "{{ L2VNI }}"
+
+- name: EVPN L2VNI configuration
+  nxos_evpn_vni:
+    vni: "{{ item.vni }}"
+    route_distinguisher: auto
+    route_target_both: auto   
+  with_items: "{{ L2VNI }}"                                           

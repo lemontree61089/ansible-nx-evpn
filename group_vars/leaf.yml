@@ -1,2 +1,7 @@
 ---
-vrf_name: Management12345
+L3VNI:
+  - { vlan: 502, vni: 5502, vlan_name: L3-TST3, vrf: TST3 }
+  - { vlan: 503, vni: 5503, vlan_name: L3-TST4, vrf: TST4 }
+L2VNI:
+  - { vlan: 300, vni: 30200, addr: 172.21.200.1, mask: 24, vlan_name: L2-VNI-300, vrf: TST3, interface: ethernet1/9}
+  - { vlan: 301, vni: 30201, addr: 172.21.201.1, mask: 24, vlan_name: L2-VNI-301, vrf: TST3, interface: ethernet1/8}

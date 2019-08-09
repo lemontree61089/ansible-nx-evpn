@@ -1,0 +1,15 @@
+---
+- name: Create EVPN configuration
+  hosts: leaf
+  gather_facts: false
+  remote_user: "{{remote_user}}"
+  connection: local
+
+  tasks:
+              - debug: msg='Rolling back to last checkpoint'
+              - name: Rollback to checkpoint
+                nxos_rollback:
+                  rollback_to: backup.cfg
+                  timeout: 60 
+
+

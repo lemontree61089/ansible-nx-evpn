@@ -1,0 +1,16 @@
+---
+- name: Get VNI list
+  nxos_command:
+    commands: "show nve vni | json"
+  register: result_vni
+
+- name: Save output
+  set_fact:
+    vni_list: "{{ result_vni.stdout[0].TABLE_nve_vni.ROW_nve_vni }}"
+
+- name: Check if VNI exists
+  check_vni:
+    vni_list: "{{ vni_list }}"
+    vni_id: "{{ item.vni }}"
+  with_items: "{{ L2VNI }}"
+

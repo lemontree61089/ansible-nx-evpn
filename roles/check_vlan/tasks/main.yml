@@ -1,0 +1,15 @@
+---
+- name: Take the VLAN list
+  nxos_command:
+    commands: "show vlan brief | json"
+  register: result_vlan
+
+- name: Save output
+  set_fact:
+    vlan_list_running: "{{ result_vlan.stdout[0].TABLE_vlanbriefxbrief.ROW_vlanbriefxbrief }}"
+
+- name: Check if VLAN exists
+  check_vlan:
+    vlan_list_running: "{{ vlan_list_running }}"
+    vlan_config: "{{ item.vlan }}"
+  with_items: "{{ L3VNI }}"

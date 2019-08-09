@@ -1,0 +1,6 @@
+---
+- debug: msg='Rolling back to last checkpoint'
+- name: Rollback to checkpoint
+  nxos_rollback:
+    rollback_to: backup.cfg
+    timeout: 60 

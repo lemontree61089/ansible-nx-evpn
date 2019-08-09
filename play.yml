@@ -11,7 +11,7 @@
                 nxos_rollback:
                   checkpoint_file: backup.cfg
 
-              - name: EVPN L3 config
+              - name: Full EVPN config
                 block:
                   - name: Get VRF list
                     nxos_command:
@@ -52,7 +52,7 @@
                     register: free_vlan
 
                   - debug:
-                      msg: "{{ free_vlan.meta.vlan_free }}"
+                      msg: "{{ 'VLAN (L3VNI)' + free_vlan.meta.vlan_free|string + ' will be created' }}"
 
                   - name: Get VNI list
                     nxos_command:
@@ -69,23 +69,60 @@
                     register: free_l3vni
 
                   - debug:
-                      msg: "{{ free_l3vni.meta.l3vni_free }}"
+                      msg: "{{ 'L3VNI ' + free_l3vni.meta.l3vni_free|string + ' will be created' }}"
 
+                  - name: Get next free L2VNI
+                    search_next_l2vni:
+                      list: "{{ vni }}"
+                    register: free_l2vni
+
+                  - debug:
+                      msg: "{{ 'L2VNI ' + free_l2vni.meta.l2vni_free|string + ' will be created' }}"
 
                   - name: Create VLAN and associate to L3VNI
                     nxos_vlan:
                       vlan_id: "{{ free_vlan.meta.vlan_free }}"
                       mapped_vni: "{{ free_l3vni.meta.l3vni_free }}"
 
+                  - name: Take the VLAN list
+                    nxos_command:
+                      commands: "show vlan brief | json"
+                    register: result_vlan
+
+                  - name: Save output
+                    set_fact:
+                      vlan: "{{ result_vlan.stdout[0].TABLE_vlanbriefxbrief.ROW_vlanbriefxbrief }}"
+
+                  - name: Get next free VLAN
+                    search_vlan:
+                      list: "{{ vlan }}"
+                    register: free_vlan_l2
+
+                  - name: Create VLAN and associate to L2VNI
+                    nxos_vlan:
+                      vlan_id: "{{ free_vlan_l2.meta.vlan_free }}"
+                      mapped_vni: "{{ free_l2vni.meta.l2vni_free }}"
+
+                  - debug:
+                      msg: "{{ 'VLAN (L2VNI)' + free_vlan_l2.meta.vlan_free|string + ' will be created' }}"
+
+                  - name: Configure Port as layer2
+                    nxos_interface:
+                      interface: "{{ interface }}"
+                      mode: layer2
+                      admin_state: up
+
+                  - name: Assign the VLAN to port
+                    nxos_switchport:
+                      interface: "{{ interface }}"
+                      mode: access
+                      access_vlan: "{{ free_vlan_l2.meta.vlan_free }}"
+
                   - name: Add L3VNI to VTEP
                     nxos_vxlan_vtep_vni:
                       interface: nve1
                       vni: "{{ free_l3vni.meta.l3vni_free }}"
-                      assoc_vrf: "true"
-
-                  - name: Create SVI
-                    nxos_interface:
-                      interface: "{{ 'vlan'+  free_vlan.meta.vlan_free|string }}"                        
+                      assoc_vrf: "true"                     
 
                   - name: Create VRF
                     nxos_vrf:
@@ -99,10 +136,54 @@
                       afi: ipv4
                       route_target_both_auto_evpn: true
 
-                  - name: Asign SVI to VRF
+                  - name: Create SVI (L3VNI)
+                    nxos_interface:
+                      interface: "{{ 'vlan'+  free_vlan.meta.vlan_free|string }}"   
+
+                  - name: Asign SVI to VRF (L3VNI)
                     nxos_vrf_interface:
                       vrf: "{{ vrf_name }}"
-                      interface: "{{ 'vlan'+  free_vlan.meta.vlan_free|string }}"                                
+                      interface: "{{ 'vlan'+  free_vlan.meta.vlan_free|string }}"
+
+                  - name: Enable IP forward on SVI
+                    nxos_interface:
+                      interface: "{{ 'vlan'+ free_vlan.meta.vlan_free|string }}" 
+                      ip_forward: enable  
+
+                  - name: Create SVI (L2VNI)
+                    nxos_interface:
+                      interface: "{{ 'vlan'+  free_vlan_l2.meta.vlan_free|string }}"
+
+                  - name: Asign SVI to VRF (L2VNI)
+                    nxos_vrf_interface:
+                      vrf: "{{ vrf_name }}"
+                      interface: "{{ 'vlan'+  free_vlan_l2.meta.vlan_free|string }}"                     
+
+                  - name: Configure IP settings to SVI
+                    nxos_ip_interface:
+                      interface: "{{ 'vlan'+  free_vlan_l2.meta.vlan_free|string }}"
+                      addr: "{{ item.addr }}"
+                      mask: "{{ item.mask }}"
+                    with_items: 
+                    - "{{ ip }}"
+
+                  - name: Enable anycast gw on SVI
+                    nxos_interface:
+                      interface: "{{ 'vlan'+  free_vlan_l2.meta.vlan_free|string }}"
+                      fabric_forwarding_anycast_gateway: true
+
+                  - name: Add L2VNI to VTEP
+                    nxos_vxlan_vtep_vni:
+                      interface: nve1
+                      vni: "{{ free_l2vni.meta.l2vni_free }}"
+                      ingress_replication: bgp
+                      suppress_arp: true
+
+                  - name: EVPN L2VNI configuration
+                    nxos_evpn_vni:
+                      vni: "{{ free_l2vni.meta.l2vni_free }}"
+                      route_distinguisher: auto
+                      route_target_both: auto
 
                   - name: BASE AF CONFIG
                     nxos_bgp_af:
@@ -112,16 +193,9 @@
                         safi: "unicast"
                         advertise_l2vpn_evpn: "true"
 
-                  - name: Enable IP forward on SVI
-                    nxos_interface:
-                      interface: "{{ 'vlan'+ free_vlan.meta.vlan_free|string }}" 
-                      ip_forward: enable    
-
                 rescue:
                   - debug: msg='Error on one of the tasks, rolling back to previous checkpoint'
                   - name: Rollback to checkpoint
                     nxos_rollback:
                       rollback_to: backup.cfg
                       timeout: 60 
-
-

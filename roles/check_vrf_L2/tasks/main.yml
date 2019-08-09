@@ -1,0 +1,15 @@
+---
+- name: Get VRF list
+  nxos_command:
+    commands: "show vrf | json"
+  register: result
+
+- name: Save output
+  set_fact:
+    vrf: "{{ result.stdout[0].TABLE_vrf.ROW_vrf }}"
+
+- name: Check if vrf exists
+  check_vrf:
+    vrf_list: "{{ vrf }}"
+    vrf_name: "{{ item.vrf }}"
+  with_items: "{{ L2VNI }}"
