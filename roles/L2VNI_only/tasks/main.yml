@@ -13,12 +13,21 @@
     admin_state: up
   with_items: "{{ L2VNI }}"
 
-- name: Assign the VLAN to port
+- name: Assign the VLAN to port in access mode
   nxos_switchport:
     interface: "{{ item.interface }}"
     mode: access
     access_vlan: "{{ item.vlan }}"
   with_items: "{{ L2VNI }}"
+  when: item.interface_mode == "access"
+
+- name: Add the VLAN to the interface in trunk mode
+  nxos_switchport:
+    interface: "{{ item.interface }}"
+    mode: trunk
+    trunk_vlans: "{{ item.vlan }}"
+  with_items: "{{ L2VNI }}"
+  when: item.interface_mode == "trunk" 
 
 - name: Add L2VNI to VTEP
   nxos_vxlan_vtep_vni:
