@@ -1,38 +1,16 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+L2VNI.
+Add nexus configuration for L2VNI and associate it to an L3VNI. Will create VLAN with associated L2VNI, configure the interface in trunk or access mode, add the L2VNI to the VTEP, perform the EVPN BGP configuration, create the SVI associated with the VRF. Enable anycast gw and arp-suppression
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Variable with the following format has to be defined:
 
-Role Variables
---------------
+L2VNI:
+  - { vlan: 300, vni: 30200, vlan_name: L2-VNI-300, interface: ethernet1/9, interface_mode: trunk, addr: 172.21.200.1, mask: 24,  vrf: TST3}
+  - { vlan: 301, vni: 30201, vlan_name: L2-VNI-301, interface: ethernet1/9, interface_mode: trunk, addr: 172.21.201.1, mask: 24,  vrf: TST3} 
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
 
-Dependencies
-------------
-
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
