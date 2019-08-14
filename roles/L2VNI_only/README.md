@@ -9,9 +9,11 @@ Requirements
 
 Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
 Variable with the following format has to be defined (VRF, addr, mask are not mandatory for this role, if specified will be ignore on this role) :
+
 L2VNI:
   - { vlan: 300, vni: 30200, vlan_name: L2-VNI-300, interface: ethernet1/9, interface_mode: trunk, addr: 172.21.200.1, mask: 24,  vrf: TST3}
   - { vlan: 301, vni: 30201, vlan_name: L2-VNI-301, interface: ethernet1/9, interface_mode: trunk, addr: 172.21.201.1, mask: 24,  vrf: TST3} 
+
 
 
 Dependencies
