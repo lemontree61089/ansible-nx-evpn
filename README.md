@@ -15,3 +15,5 @@ The following roles perform those checks:
 
 Also a checkpoint is taken on all devices, so if any tasks fails a rollback will be triggered. This is to avoid a state where only some of the configuration has been done. This is either all playbook tasks succeeded or not
 
+At this point, the variables are defined in a group variables file.
+
