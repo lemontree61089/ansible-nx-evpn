@@ -1,7 +1,7 @@
 Role Name
 =========
 
-L2VNI_only
+L2VNI_only.
 Add nexus configuration for L2VNI only. Will create VLAN with associated L2VNI, configure the interface in trunk or access mode, add the L2VNI to the VTEP, and perform the EVPN BGP configuration.
 
 Requirements
